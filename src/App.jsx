@@ -11,12 +11,24 @@ const NAV=[
 const blankTrade={market:"Forex",symbol:"XAUUSD",direction:"BUY",entry_at:new Date().toISOString().slice(0,16),exit_at:"",entry_price:"",exit_price:"",stop_loss:"",take_profit:"",position_size:"",risk_percent:"1",actual_rr:"",net_pnl:"",fees:"0",strategy:"",session:"London",emotion:"Calm",rule_followed:true,notes:"",status:"closed"};
 const strategies=["Liquidity Sweep","Order Block","FVG","BOS / CHoCH","Supply & Demand","Support & Resistance","Premium / Discount","Fibonacci","Other"];
 const fmt=(v)=>Number(v||0).toLocaleString("id-ID",{maximumFractionDigits:2});
+// Indonesian IDR journal amounts use dots as thousands separators (e.g. 79.322 = Rp79,322).
+const parseJournalMoney=(value,currency="IDR")=>{
+ const raw=String(value??"").trim(); if(!raw)return 0;
+ if(currency==="IDR") return Number(raw.replace(/\./g,"").replace(/,/g,"."))||0;
+ return Number(raw.replace(/,/g,""))||0;
+};
+const normalizeLegacyIdr=(value)=>{
+ const n=Number(value||0); if(!Number.isFinite(n)||Number.isInteger(n))return n;
+ const decimals=String(n).split(".")[1]||"";
+ // Older number inputs stored Indonesian thousands notation as a decimal (e.g. 79.322).
+ return decimals.length===3?Math.round(n*1000):n;
+};
 function App(){
  const [session,setSession]=useState(null),[loading,setLoading]=useState(true),[page,setPage]=useState("Dashboard"),[mobile,setMobile]=useState(false);
  const defaultSettings={theme:"dark",language:"en",currency:"IDR",defaultMarket:"Forex",defaultTimeframe:"H1",defaultRisk:"1",dailyLossLimit:"3",targetRR:"2",reminderJournal:false,reminderWeekly:false,reminderRisk:false,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Jakarta",dateFormat:"DD/MM/YYYY",defaultAccount:"all"};
  const [settings,setSettings]=useState(defaultSettings),[settingsSection,setSettingsSection]=useState("Appearance"),[newPassword,setNewPassword]=useState("");
  const t=(en,id)=>settings.language==="id"?id:en;
- const displayMoney=(n)=>new Intl.NumberFormat(settings.language==="id"?"id-ID":"en-US",{style:"currency",currency:settings.currency,maximumFractionDigits:settings.currency==="IDR"?0:2}).format(Number(n||0));
+ const displayMoney=(n)=>new Intl.NumberFormat(settings.language==="id"?"id-ID":"en-US",{style:"currency",currency:settings.currency,maximumFractionDigits:settings.currency==="IDR"?0:2}).format(settings.currency==="IDR"?normalizeLegacyIdr(n):Number(n||0));
  useEffect(()=>{if(!session?.user?.id)return;try{const saved=localStorage.getItem(`veltrix-settings-${session.user.id}`);if(saved)setSettings({...defaultSettings,...JSON.parse(saved)});}catch(e){console.warn("Could not load preferences",e);}},[session?.user?.id]);
  useEffect(()=>{if(!session?.user?.id)return;localStorage.setItem(`veltrix-settings-${session.user.id}`,JSON.stringify(settings));const theme=settings.theme==="system"?(window.matchMedia?.("(prefers-color-scheme: light)").matches?"light":"dark"):settings.theme;document.documentElement.dataset.theme=theme;},[settings,session?.user?.id]);
  const updateSetting=(key,value)=>setSettings(prev=>({...prev,[key]:value}));
@@ -36,7 +48,7 @@ function App(){
      supabase.from("trading_accounts").select("*").order("created_at"),
      supabase.from("prop_challenges").select("*").order("created_at",{ascending:false})
    ]);
-   if(!t.error)setTrades(t.data||[]); if(!a.error){setAccounts(a.data||[]);if(!accountId||accountId==="all")setAccountId("all");}
+   if(!t.error)setTrades((t.data||[]).map(row=>({...row,net_pnl:normalizeLegacyIdr(row.net_pnl),fees:normalizeLegacyIdr(row.fees)}))); if(!a.error){setAccounts(a.data||[]);if(!accountId||accountId==="all")setAccountId("all");}
    if(!c.error)setChallenges(c.data||[]);
  }
  const visible=useMemo(()=>trades.filter(t=>(accountId==="all"||t.account_id===accountId)&&(filter==="All"||t.market===filter)&&(!query||`${t.symbol} ${t.strategy||""}`.toLowerCase().includes(query.toLowerCase()))),[trades,accountId,filter,query]);
@@ -53,7 +65,7 @@ function App(){
    e.preventDefault();setSaving(true);
    let screenshot_url=form.screenshot_url||null;
    if(file){const path=`${session.user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;const up=await supabase.storage.from("trade-screenshots").upload(path,file,{upsert:false});if(up.error){notify(up.error.message);setSaving(false);return;}const {data}=supabase.storage.from("trade-screenshots").getPublicUrl(path);screenshot_url=data.publicUrl;}
-   const payload={...form,entry_at:new Date(form.entry_at).toISOString(),exit_at:form.exit_at?new Date(form.exit_at).toISOString():null,entry_price:Number(form.entry_price||0),exit_price:form.exit_price===""?null:Number(form.exit_price),stop_loss:form.stop_loss===""?null:Number(form.stop_loss),take_profit:form.take_profit===""?null:Number(form.take_profit),position_size:Number(form.position_size||0),risk_percent:Number(form.risk_percent||0),actual_rr:Number(form.actual_rr||0),net_pnl:Number(form.net_pnl||0),fees:Number(form.fees||0),screenshot_url,account_id:form.account_id||null,user_id:session.user.id};
+   const payload={...form,entry_at:new Date(form.entry_at).toISOString(),exit_at:form.exit_at?new Date(form.exit_at).toISOString():null,entry_price:Number(form.entry_price||0),exit_price:form.exit_price===""?null:Number(form.exit_price),stop_loss:form.stop_loss===""?null:Number(form.stop_loss),take_profit:form.take_profit===""?null:Number(form.take_profit),position_size:Number(form.position_size||0),risk_percent:Number(form.risk_percent||0),actual_rr:Number(form.actual_rr||0),net_pnl:parseJournalMoney(form.net_pnl,settings.currency),fees:parseJournalMoney(form.fees,settings.currency),screenshot_url,account_id:form.account_id||null,user_id:session.user.id};
    const res=editing?await supabase.from("trades").update(payload).eq("id",editing.id):await supabase.from("trades").insert(payload);
    if(res.error)notify(res.error.message);else{notify("Trade saved");setModal(false);loadAll();}
    setSaving(false);
@@ -110,7 +122,7 @@ function App(){
     <label>Direction<select value={form.direction} onChange={e=>setForm({...form,direction:e.target.value})}><option>BUY</option><option>SELL</option></select></label>
     <label>Entry time<input required type="datetime-local" value={form.entry_at} onChange={e=>setForm({...form,entry_at:e.target.value})}/></label>
     <label>Exit time<input type="datetime-local" value={form.exit_at||""} onChange={e=>setForm({...form,exit_at:e.target.value})}/></label>
-    {["entry_price","exit_price","stop_loss","take_profit","position_size","risk_percent","actual_rr","net_pnl","fees"].map(k=><label>{({entry_price:"Entry Price",exit_price:"Exit Price",stop_loss:"Stop Loss",take_profit:"Take Profit",position_size:"Position Size / Lots",risk_percent:"Risk (%)",actual_rr:"Actual R:R",net_pnl:"Net P/L (Rp)",fees:"Fees (Rp)"})[k]}<input type="number" step="any" value={form[k]??""} onChange={e=>setForm({...form,[k]:e.target.value})}/></label>)}
+    {["entry_price","exit_price","stop_loss","take_profit","position_size","risk_percent","actual_rr","net_pnl","fees"].map(k=><label>{({entry_price:"Entry Price",exit_price:"Exit Price",stop_loss:"Stop Loss",take_profit:"Take Profit",position_size:"Position Size / Lots",risk_percent:"Risk (%)",actual_rr:"Actual R:R",net_pnl:`Net P/L (${settings.currency})`,fees:`Fees (${settings.currency})`})[k]}<input type={k==="net_pnl"||k==="fees"?"text":"number"} inputMode={k==="net_pnl"||k==="fees"?"decimal":"numeric"} placeholder={k==="net_pnl"||k==="fees"?"Example: 79.322":""} step="any" value={form[k]??""} onChange={e=>setForm({...form,[k]:e.target.value})}/></label>)}
     <label>Strategy<select value={form.strategy||""} onChange={e=>setForm({...form,strategy:e.target.value})}><option value="">Select setup</option>{strategies.map(s=><option>{s}</option>)}</select></label>
     <label>Market session<select value={form.session||"London"} onChange={e=>setForm({...form,session:e.target.value})}>{["Asia","London","New York","Overlap","Other"].map(s=><option>{s}</option>)}</select></label>
     <label>Emotion<select value={form.emotion||"Calm"} onChange={e=>setForm({...form,emotion:e.target.value})}>{["Calm","Confident","Anxious","FOMO","Revenge","Tired","Overconfident"].map(s=><option>{s}</option>)}</select></label>
