@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = url && key ? createClient(url, key) : null;
-export const money = (n, currency="USD") => new Intl.NumberFormat("en-US",{style:"currency",currency,maximumFractionDigits:2}).format(Number(n||0));
+export const money = (n, currency="IDR") => new Intl.NumberFormat("id-ID",{style:"currency",currency,maximumFractionDigits:0}).format(Number(n||0));
 export const pct = n => `${Number(n||0).toFixed(1)}%`;
 export const dateLabel = d => d ? new Date(d).toLocaleDateString() : "—";
 export const calcStats = trades => {
