@@ -93,7 +93,7 @@ function App(){
   <main className="main">
    <header className="topbar"><button className="icon-btn mobile-menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button><div><div className="eyebrow">DISCIPLINE OVER EMOTION</div><h1>{page==="Settings"?t("Settings","Pengaturan"):page}</h1></div><div className="top-actions"><select value={accountId} onChange={e=>setAccountId(e.target.value)}><option value="all">All accounts</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><button className="primary" onClick={openNew}><Plus size={16}/> Add Trade</button></div></header>
    {accounts.length===0&&<div className="setup-banner"><div><b>Start with your first trading account</b><p>Create an account to organize Forex, Crypto, and prop firm trades separately.</p></div><button className="secondary" onClick={()=>setAccountModal(true)}>Create account</button></div>}
-   {page==="Dashboard"&&<><div className="filter-row"><div className="segmented">{["All","Forex","Crypto"].map(x=><button className={filter===x?"selected":""} onClick={()=>setFilter(x)}>{x}</button>)}</div><span className="muted small">Based on closed trades · {stats.closed} records</span></div><div className="stat-grid"><Stat label="Net P/L" value={displayMoney(stats.net)} tone={stats.net>=0?"positive":"negative"}/><Stat label="Win Rate" value={pct(winRate)}/><Stat label="Closed Trades" value={stats.closed}/><Stat label="Profit Factor" value={stats.pf===Infinity?"∞":fmt(stats.pf)}/><Stat label="Average R:R" value={`${fmt(stats.avgRR)}R`}/><Stat label="Max Drawdown" value={displayMoney(stats.maxDD)} tone="negative"/></div><div className="two-col"><Panel title="Equity Curve" subtitle="Cumulative realized net P/L"><div className="chart">{equity.length?<ResponsiveContainer width="100%" height="100%"><AreaChart data={equity}><defs><linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c3ccd7" stopOpacity={.28}/><stop offset="95%" stopColor="#c3ccd7" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#242a32" vertical={false}/><XAxis dataKey="date" tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:"#11151b",border:"1px solid #303844",borderRadius:10}}/><Area type="monotone" dataKey="equity" stroke="#c5ced9" fill="url(#silver)" strokeWidth={2}/></AreaChart></ResponsiveContainer>:<Empty text="Your equity curve will appear after you log closed trades."/>}</div></Panel><Panel title="Strategy P/L" subtitle="Net result by setup"><div className="chart">{byStrategy.length?<ResponsiveContainer width="100%" height="100%"><BarChart data={byStrategy}><CartesianGrid stroke="#242a32" vertical={false}/><XAxis dataKey="name" tick={{fill:"#77818e",fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:"#11151b",border:"1px solid #303844",borderRadius:10}}/><Bar dataKey="pnl" fill="#aeb9c7" radius={[5,5,0,0]}/></BarChart></ResponsiveContainer>:<Empty text="Strategy analytics will appear after trades are recorded."/>}</div></Panel></div><Panel title="Recent Trades" action={<button className="text-btn" onClick={()=>setPage("Trade Log")}>View all →</button>}><TradeTable rows={visible.slice(0,6)} onEdit={openEdit} onDelete={deleteTrade} moneyFormat={displayMoney}/></Panel></>}
+   {page==="Dashboard"&&<><div className="filter-row"><div className="segmented">{["All","Forex","Crypto"].map(x=><button className={filter===x?"selected":""} onClick={()=>setFilter(x)}>{x}</button>)}</div><span className="muted small">Based on closed trades · {stats.closed} records</span></div><div className="stat-grid"><Stat label="Net P/L" value={displayMoney(stats.net)} tone={stats.net>=0?"positive":"negative"}/><Stat label="Win Rate" value={pct(winRate)}/><Stat label="Closed Trades" value={stats.closed}/><ProfitFactorGauge value={stats.pf} hasTrades={stats.closed>0} /><Stat label="Average R:R" value={`${fmt(stats.avgRR)}R`}/><Stat label="Max Drawdown" value={displayMoney(stats.maxDD)} tone="negative"/></div><div className="two-col"><Panel title="Equity Curve" subtitle="Cumulative realized net P/L"><div className="chart">{equity.length?<ResponsiveContainer width="100%" height="100%"><AreaChart data={equity}><defs><linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c3ccd7" stopOpacity={.28}/><stop offset="95%" stopColor="#c3ccd7" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#242a32" vertical={false}/><XAxis dataKey="date" tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:"#11151b",border:"1px solid #303844",borderRadius:10}}/><Area type="monotone" dataKey="equity" stroke="#c5ced9" fill="url(#silver)" strokeWidth={2}/></AreaChart></ResponsiveContainer>:<Empty text="Your equity curve will appear after you log closed trades."/>}</div></Panel><Panel title="Strategy P/L" subtitle="Net result by setup"><div className="chart">{byStrategy.length?<ResponsiveContainer width="100%" height="100%"><BarChart data={byStrategy}><CartesianGrid stroke="#242a32" vertical={false}/><XAxis dataKey="name" tick={{fill:"#77818e",fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:"#77818e",fontSize:11}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:"#11151b",border:"1px solid #303844",borderRadius:10}}/><Bar dataKey="pnl" fill="#aeb9c7" radius={[5,5,0,0]}/></BarChart></ResponsiveContainer>:<Empty text="Strategy analytics will appear after trades are recorded."/>}</div></Panel></div><Panel title="Recent Trades" action={<button className="text-btn" onClick={()=>setPage("Trade Log")}>View all →</button>}><TradeTable rows={visible.slice(0,6)} onEdit={openEdit} onDelete={deleteTrade} moneyFormat={displayMoney}/></Panel></>}
    {page==="Trade Log"&&<><div className="toolbar"><div className="searchbox"><Search size={16}/><input placeholder="Search symbol or strategy…" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="toolbar-actions"><select value={filter} onChange={e=>setFilter(e.target.value)}><option>All</option><option>Forex</option><option>Crypto</option></select><button className="secondary" onClick={()=>csvDownload(visible)}><FileDown size={15}/> CSV</button><button className="secondary" onClick={exportPDF}><FileDown size={15}/> PDF</button></div></div><Panel title="All Trades" subtitle={`${visible.length} matching records`}><TradeTable rows={visible} onEdit={openEdit} onDelete={deleteTrade} moneyFormat={displayMoney}/></Panel></>}
    {page==="Calendar"&&<CalendarView trades={visible} moneyFormat={displayMoney}/>}
    {page==="Analytics"&&<><div className="stat-grid"><Stat label="Gross Winning P/L" value={displayMoney(visible.filter(t=>t.status==="closed"&&t.net_pnl>0).reduce((s,t)=>s+Number(t.net_pnl),0))}/><Stat label="Gross Losing P/L" value={displayMoney(visible.filter(t=>t.status==="closed"&&t.net_pnl<0).reduce((s,t)=>s+Number(t.net_pnl),0))}/><Stat label="Winning Trades" value={stats.wins}/><Stat label="Losing Trades" value={stats.losses}/></div><div className="two-col"><Panel title="Performance by Strategy"><Breakdown rows={byStrategy} moneyFormat={displayMoney}/></Panel><Panel title="Performance by Market"><Breakdown rows={["Forex","Crypto"].map(m=>({name:m,pnl:visible.filter(t=>t.market===m).reduce((s,t)=>s+Number(t.net_pnl||0),0)}))} moneyFormat={displayMoney}/></Panel></div><Panel title="Strategy win-rate breakdown"><StrategyBreakdown trades={visible}/></Panel></>}
@@ -136,6 +136,45 @@ function App(){
  </div>;
 }
 function Brand(){return <div className="brand"><div className="brand-mark">V</div><div><b>VELTRIX</b><span>JOURNAL</span></div></div>}
+function ProfitFactorGauge({value,hasTrades}){
+ const finite=Number.isFinite(value);
+ const valid=hasTrades && (finite ? value>=0 : value===Infinity);
+ const score=valid?(finite?Math.min(value,4):4):0;
+ const angle=Math.PI-(score/4)*Math.PI;
+ const cx=150,cy=130,r=103;
+ const nx=cx+Math.cos(angle)*76,ny=cy-Math.sin(angle)*76;
+ const point=(v,rad=r)=>({x:cx+Math.cos(Math.PI-(v/4)*Math.PI)*rad,y:cy-Math.sin(Math.PI-(v/4)*Math.PI)*rad});
+ const arc=(a,b)=>{const p1=point(a),p2=point(b);return `M ${p1.x} ${p1.y} A ${r} ${r} 0 0 1 ${p2.x} ${p2.y}`;};
+ let status="N/A",tone="na";
+ if(valid){
+  if(value<1){status="Merugi";tone="loss";}
+  else if(value===1){status="Impas";tone="even";}
+  else if(value<1.5){status="Cukup";tone="fair";}
+  else if(value<2){status="Bagus";tone="good";}
+  else if(value<3){status="Sangat Bagus";tone="great";}
+  else{status="Perfect";tone="perfect";}
+ }
+ const shown=!valid?"—":value===Infinity?"∞":value.toFixed(2);
+ return <div className={`stat-card pf-gauge-card pf-${tone}`}>
+  <span className="pf-gauge-title">Profit Factor</span>
+  <svg className="pf-gauge-svg" viewBox="0 0 300 166" role="img" aria-label={`Profit Factor ${shown}, ${status}`}>
+   <path d={arc(0,4)} className="pf-track"/>
+   <path d={arc(0,1)} className="pf-segment pf-loss"/>
+   <path d={arc(1,1.5)} className="pf-segment pf-fair"/>
+   <path d={arc(1.5,2)} className="pf-segment pf-even"/>
+   <path d={arc(2,3)} className="pf-segment pf-good"/>
+   <path d={arc(3,4)} className="pf-segment pf-perfect"/>
+   {valid&&<><line x1={cx} y1={cy} x2={nx} y2={ny} className="pf-needle"/><circle cx={cx} cy={cy} r="7" className="pf-hub"/></>}
+   <text x="28" y="151" className="pf-scale-label">0</text>
+   <text x="91" y="48" className="pf-scale-label">1</text>
+   <text x="150" y="19" textAnchor="middle" className="pf-scale-label">2</text>
+   <text x="210" y="48" textAnchor="end" className="pf-scale-label">3</text>
+   <text x="272" y="151" textAnchor="end" className="pf-scale-label">4+</text>
+   <text x="150" y="112" textAnchor="middle" className="pf-value">{shown}</text>
+   <text x="150" y="133" textAnchor="middle" className="pf-status">{status.toUpperCase()}</text>
+  </svg>
+ </div>;
+}
 function Stat({label,value,tone}){return <div className="stat-card"><span>{label}</span><strong className={tone||""}>{value}</strong></div>}
 function Panel({title,subtitle,action,children}){return <section className="panel"><div className="panel-head"><div><h3>{title}</h3>{subtitle&&<p>{subtitle}</p>}</div>{action}</div>{children}</section>}
 function Empty({text}){return <div className="empty"><Activity size={22}/><p>{text}</p></div>}
