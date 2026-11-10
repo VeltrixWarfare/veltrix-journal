@@ -74,29 +74,18 @@ function App(){
  async function addAccount(e){e.preventDefault();const {error}=await supabase.from("trading_accounts").insert({user_id:session.user.id,name:accountName,market:accountMarket});if(error)notify(error.message);else{setAccountModal(false);setAccountName("");loadAll();notify("Account created");}}
  async function addChallenge(e){e.preventDefault();const {error}=await supabase.from("prop_challenges").insert({...challengeForm,user_id:session.user.id,starting_balance:Number(challengeForm.starting_balance),daily_limit:Number(challengeForm.daily_limit),max_drawdown:Number(challengeForm.max_drawdown),target:Number(challengeForm.target)});if(error)notify(error.message);else{setChallengeModal(false);loadAll();notify("Challenge added");}}
  async function runAI(){
-   setAiBusy(true);setAiText("");
-   const summary={totalTrades:stats.closed,winRate:stats.winRate,netPnl:stats.net,profitFactor:Number.isFinite(stats.pf)?stats.pf:(stats.pf===Infinity?"Infinity":stats.pf),maxDrawdown:stats.maxDD,strategies:byStrategy,recentTrades:visible.slice(0,30).map(t=>({market:t.market,symbol:t.symbol,direction:t.direction,pnl:Number(t.net_pnl||0),strategy:t.strategy,emotion:t.emotion,ruleFollowed:t.rule_followed,notes:t.notes,actualRR:t.actual_rr,riskPercent:t.risk_percent,entryAt:t.entry_at,exitAt:t.exit_at}))};
+   setAiBusy(true);setAiText("Menghubungi Gemini… jika layanan sedang sibuk, sistem akan mencoba ulang otomatis.");
+   const summary={totalTrades:stats.closed,winRate:stats.winRate,netPnl:stats.net,profitFactor:stats.pf,maxDrawdown:stats.maxDD,strategies:byStrategy,recentTrades:visible.slice(0,20).map(t=>({market:t.market,symbol:t.symbol,direction:t.direction,pnl:t.net_pnl,strategy:t.strategy,emotion:t.emotion,ruleFollowed:t.rule_followed,notes:t.notes}))};
    try{
      const {data,error}=await supabase.functions.invoke("ai-review",{body:{summary}});
      if(error){
        let detail=error.message||"Request ke Supabase gagal.";
-       // FunctionsHttpError.context is a Response; read its JSON body for the real Edge Function message.
-       try{
-         const response=error.context;
-         if(response&&typeof response.clone==="function"){
-           const payload=await response.clone().json();
-           if(payload?.error)detail=payload.error+(payload.code?` [${payload.code}]`:"")+(payload.model?` (model: ${payload.model})`:"");
-         }
-       }catch(_){/* Keep the SDK message when no JSON response is available. */}
+       try{const response=error.context;if(response&&typeof response.clone==="function"){const payload=await response.clone().json();if(payload?.error)detail=payload.error+(payload.code?` [${payload.code}]`:"");}}catch(_){}
        setAiText("AI Review gagal: "+detail);
-     }else if(data?.error){
-       setAiText("AI Review gagal: "+data.error+(data.code?` [${data.code}]`:""));
-     }else{
-       setAiText(data?.review||"Gemini berhasil dipanggil, tetapi tidak mengembalikan teks review.");
-     }
-   }catch(err){
-     setAiText("AI Review gagal: "+(err?.message||"Kesalahan tidak diketahui."));
-   }finally{setAiBusy(false);}
+     }else if(data?.error){setAiText("AI Review gagal: "+data.error+(data.code?` [${data.code}]`:""));}
+     else{setAiText(data?.review||"Gemini tidak mengembalikan teks review.");}
+   }catch(err){setAiText("AI Review gagal: "+(err?.message||"Kesalahan tidak diketahui."));}
+   finally{setAiBusy(false);}
  }
  function exportPDF(){const doc=new jsPDF();doc.setFontSize(18);doc.text("VELTRIX JOURNAL — PERFORMANCE REPORT",14,18);doc.setFontSize(10);doc.text(`Generated: ${new Date().toLocaleString()}`,14,26);doc.text(`Closed trades: ${stats.closed} | Win rate: ${pct(stats.winRate)} | Net P/L: ${displayMoney(stats.net)} | PF: ${stats.pf===Infinity?"∞":fmt(stats.pf)}`,14,36);let y=48;visible.slice(0,28).forEach(t=>{doc.text(`${dateLabel(t.entry_at)} | ${t.market} ${t.symbol} ${t.direction} | ${t.status} | ${displayMoney(t.net_pnl)}`,14,y);y+=7;if(y>280){doc.addPage();y=18;}});doc.save("veltrix-journal-report.pdf");}
  const riskAmount=Number(risk.balance||0)*Number(risk.risk||0)/100;
