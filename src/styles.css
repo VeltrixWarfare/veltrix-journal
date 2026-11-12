@@ -57,3 +57,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(207,224,2
 .pf-scale-label{fill:#7f8a98;font-size:9px;font-family:inherit}.pf-value{fill:#f0f3f7;font-size:27px;font-weight:700;font-variant-numeric:tabular-nums}.pf-status{font-size:10px;font-weight:700;letter-spacing:.8px}.pf-loss .pf-status{fill:#e47780}.pf-even .pf-status{fill:#aeb7c2}.pf-fair .pf-status{fill:#e6b35f}.pf-good .pf-status{fill:#9bc99f}.pf-great .pf-status{fill:#59c38d}.pf-perfect .pf-status{fill:#67d7a4}.pf-na .pf-status{fill:#929daa}
 html[data-theme="light"] .pf-track{stroke:rgba(70,85,103,.16)}html[data-theme="light"] .pf-value{fill:#202833}html[data-theme="light"] .pf-needle,html[data-theme="light"] .pf-hub{stroke:#344253}html[data-theme="light"] .pf-hub{fill:#344253}
 @media(max-width:420px){.pf-gauge-card{min-height:166px;padding:12px 11px 6px}.pf-gauge-svg{margin-top:5px}}
+
+/* Dashboard P/L period controls */
+.period-tools{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;flex:1}
+.period-select{display:flex;flex-wrap:wrap;gap:4px;background:#11161c;border:1px solid #29313b;padding:4px;border-radius:8px;max-width:100%}
+.period-select button{border:0;background:transparent;color:#8994a2;padding:7px 11px;border-radius:5px;font-size:11px;white-space:nowrap}
+.period-select button.selected{background:#d6dde6;color:#11161c;font-weight:700}
+.date-range{display:flex;gap:9px;flex-wrap:wrap}
+.date-range label{display:flex;flex-direction:column;gap:4px;color:#8994a2;font-size:10px}
+.date-range input{background:#11161c;border:1px solid #303844;border-radius:6px;color:inherit;padding:7px 9px;font:inherit;color-scheme:dark;min-width:130px}
+.filter-row{align-items:flex-start}
+@media(max-width:600px){.filter-row{flex-direction:column;align-items:stretch}.period-select{width:100%;box-sizing:border-box}.period-select button{flex:1;padding:8px 5px}.period-tools{width:100%}}
